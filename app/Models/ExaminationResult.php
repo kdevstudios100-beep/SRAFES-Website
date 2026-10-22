@@ -15,6 +15,17 @@ class ExaminationResult extends Model implements HasMedia
     use HasFactory;
     use InteractsWithMedia;
 
+    protected $fillable = [
+        'student_id',
+        'academic_class_id',
+        'year',
+        'detail',
+        'total_marks',
+        'obtained_marks',
+        'status',
+        'grade',
+    ];
+
     public function getCasts(): array
     {
         return [
@@ -49,6 +60,8 @@ class ExaminationResult extends Model implements HasMedia
     {
         $this
             ->addMediaCollection('result_file')
+            // Private disk: files are only reachable through authorized downloads or short-lived signed URLs
+            ->useDisk('local')
             ->singleFile();
     }
 }

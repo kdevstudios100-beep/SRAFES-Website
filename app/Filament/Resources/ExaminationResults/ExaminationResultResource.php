@@ -64,7 +64,8 @@ class ExaminationResultResource extends Resource
                     ->imageEditor()
                     ->downloadable()
                     ->collection('result_file')
-                    ->disk('filament'),
+                    ->disk('local')
+                    ->visibility('private'),
             ]);
     }
 

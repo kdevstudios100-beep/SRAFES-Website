@@ -15,3 +15,14 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 pest()->extend(Tests\TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature');
+
+function userWithRole(?App\Enum\UserRole $role, bool $active = true): App\Models\User
+{
+    $user = App\Models\User::factory()->create(['is_active' => $active]);
+
+    if ($role) {
+        $user->assignRole($role->value);
+    }
+
+    return $user;
+}

@@ -29,10 +29,13 @@ class JobApplication extends Model implements HasMedia
     {
         $this
             ->addMediaCollection('resume')
+            // Private disk: applicant documents are only reachable through short-lived signed URLs
+            ->useDisk('local')
             ->singleFile();
 
         $this
             ->addMediaCollection('cover_letter')
+            ->useDisk('local')
             ->singleFile();
     }
 }

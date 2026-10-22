@@ -14,6 +14,15 @@ class Employee extends Model implements HasMedia
     use HasFactory;
     use InteractsWithMedia;
 
+    protected $fillable = [
+        'name',
+        'role',
+        'facebook_url',
+        'x_url',
+        'is_featured',
+        'is_active',
+    ];
+
     public function getCasts(): array
     {
         return [

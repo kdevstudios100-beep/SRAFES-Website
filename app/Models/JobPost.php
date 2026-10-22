@@ -11,6 +11,14 @@ class JobPost extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+        'title',
+        'content',
+        'salary_range',
+        'application_deadline',
+        'is_active',
+    ];
+
     protected $casts = [
         'application_deadline' => 'date',
         'is_active' => 'boolean',

@@ -1,0 +1,42 @@
+<?php
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Backups
+    |--------------------------------------------------------------------------
+    |
+    | Used by `srafes:backup`, `srafes:backup:verify` and `srafes:backup:restore`.
+    | Each backup is one zip holding a consistent copy of the database, every
+    | uploaded file listed in `directories`, and a manifest with checksums.
+    |
+    | Keep at least one copy off this machine: set BACKUP_COPY_PATH to a second
+    | drive, a synced folder, or a mounted network share.
+    |
+    */
+
+    'backup' => [
+        // `?:` so a blank BACKUP_PATH= in .env still falls back to the default
+        'path' => env('BACKUP_PATH') ?: storage_path('app/backups'),
+
+        'copy_to' => env('BACKUP_COPY_PATH'),
+
+        // Number of most recent backups to keep in `path`; older ones are pruned
+        'keep' => (int) env('BACKUP_KEEP', 14),
+
+        // label => absolute directory; labels name the folders inside the zip
+        'directories' => [
+            'storage-private' => storage_path('app/private'),
+            'storage-public' => storage_path('app/public'),
+            'public-filament' => public_path('filament'),
+            'public-images' => public_path('images'),
+        ],
+
+        // Relative paths (inside any directory above) that are never backed up
+        'exclude' => [
+            'livewire-tmp',
+        ],
+    ],
+
+];

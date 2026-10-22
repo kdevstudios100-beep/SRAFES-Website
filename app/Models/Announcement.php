@@ -13,6 +13,15 @@ class Announcement extends Model implements HasMedia
     use HasFactory;
     use InteractsWithMedia;
 
+    protected $fillable = [
+        'title',
+        'description',
+        'content',
+        'is_recurring',
+        'start_date',
+        'end_date',
+    ];
+
     public function getCasts()
     {
         return [

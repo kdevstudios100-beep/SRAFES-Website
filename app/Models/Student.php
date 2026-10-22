@@ -16,6 +16,18 @@ class Student extends Model implements HasMedia
     use HasFactory;
     use InteractsWithMedia;
 
+    protected $fillable = [
+        'academic_class_id',
+        'admission_number',
+        'first_name',
+        'last_name',
+        'surname',
+        'father_name',
+        'date_of_birth',
+        'is_active',
+        'has_scholarship',
+    ];
+
     protected static function booted(): void
     {
         // Delete results through Eloquent so their uploaded result files are removed too

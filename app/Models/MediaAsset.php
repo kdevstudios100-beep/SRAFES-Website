@@ -12,6 +12,15 @@ class MediaAsset extends Model
     use HasFactory;
     use \Sushi\Sushi;
 
+    protected $fillable = [
+        'extension',
+        'url',
+        'filename',
+        'path',
+        'size',
+        'dimentions',
+    ];
+
     public function getRows()
     {
         return collect(File::allFiles(public_path('images')))

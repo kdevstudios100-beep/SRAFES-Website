@@ -13,6 +13,11 @@ class SiteSetting extends Model implements HasMedia
     use HasFactory;
     use InteractsWithMedia;
 
+    protected $fillable = [
+        'settings',
+        'gallery_collections',
+    ];
+
     public function getCasts()
     {
         return [
