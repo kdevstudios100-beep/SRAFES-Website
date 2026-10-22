@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\File;
  * to a throwaway SQLite file and points every backup path at a temp folder.
  */
 beforeEach(function () {
+    $this->originalConnection = config('database.default');
     $this->sandbox = sys_get_temp_dir().DIRECTORY_SEPARATOR.'srafes-backup-test-'.bin2hex(random_bytes(6));
     File::ensureDirectoryExists($this->sandbox.'/uploads/1');
     File::put($this->sandbox.'/uploads/1/photo.jpg', 'original photo');
@@ -40,8 +41,8 @@ beforeEach(function () {
 });
 
 afterEach(function () {
-    // RefreshDatabase rolls back the *current* default connection on teardown, so point it back at :memory:
-    config(['database.default' => 'sqlite']);
+    // RefreshDatabase rolls back the *current* default connection on teardown, so point it back
+    config(['database.default' => $this->originalConnection]);
     DB::purge('backup_test');
     File::deleteDirectory($this->sandbox);
 });

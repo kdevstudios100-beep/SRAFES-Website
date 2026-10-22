@@ -9,12 +9,14 @@ use RuntimeException;
 use ZipArchive;
 
 /**
- * Creates, verifies and restores zip backups of the SQLite database and
- * uploaded files. See config/srafes.php and docs/OPERATIONS.md.
+ * Creates, verifies and restores zip backups of the database (SQLite or
+ * MySQL/MariaDB) and uploaded files. See config/srafes.php and docs/OPERATIONS.md.
  */
 class BackupManager
 {
-    private const DATABASE_ENTRY = 'database/database.sqlite';
+    private const SQLITE_ENTRY = 'database/database.sqlite';
+
+    private const MYSQL_ENTRY = 'database/database.sql';
 
     private const MANIFEST_ENTRY = 'manifest.json';
 
@@ -30,23 +32,31 @@ class BackupManager
      */
     public function create(): string
     {
-        $this->ensureSqlite();
+        $driver = $this->driver();
 
         File::ensureDirectoryExists($this->config['path']);
 
         $zipPath = $this->config['path'].DIRECTORY_SEPARATOR.'srafes-backup-'.now()->format('Ymd-His-v').'.zip';
 
-        // VACUUM INTO writes a consistent copy even while the site is in use
-        $databaseCopy = $this->tempPath('srafes-db-');
-        DB::statement('VACUUM INTO ?', [$databaseCopy]);
+        if ($driver === 'sqlite') {
+            // VACUUM INTO writes a consistent copy even while the site is in use
+            $databaseCopy = $this->tempPath('srafes-db-', '.sqlite');
+            DB::statement('VACUUM INTO ?', [$databaseCopy]);
+            $databaseEntry = self::SQLITE_ENTRY;
+            $tables = $this->sqliteRowCounts($databaseCopy);
+        } else {
+            $databaseCopy = $this->tempPath('srafes-db-', '.sql');
+            $tables = (new MysqlDumper(DB::connection()))->dump($databaseCopy);
+            $databaseEntry = self::MYSQL_ENTRY;
+        }
 
         $manifest = [
             'format' => 1,
             'created_at' => now()->toIso8601String(),
             'app' => config('app.name'),
-            'database_driver' => 'sqlite',
-            'tables' => $this->rowCounts($databaseCopy),
-            'files' => [self::DATABASE_ENTRY => hash_file('sha256', $databaseCopy)],
+            'database_driver' => $driver,
+            'tables' => $tables,
+            'files' => [$databaseEntry => hash_file('sha256', $databaseCopy)],
         ];
 
         $zip = new ZipArchive;
@@ -55,7 +65,7 @@ class BackupManager
             throw new RuntimeException("Could not create backup file [{$zipPath}].");
         }
 
-        $zip->addFile($databaseCopy, self::DATABASE_ENTRY);
+        $zip->addFile($databaseCopy, $databaseEntry);
 
         foreach ($this->config['directories'] as $label => $directory) {
             if (! is_dir($directory)) {
@@ -87,15 +97,16 @@ class BackupManager
     }
 
     /**
-     * @return array{ok: bool, errors: array<string>, files: int, tables: array<string, int>, created_at: ?string}
+     * @return array{ok: bool, errors: array<string>, files: int, tables: array<string, int>, created_at: ?string, database_driver: ?string}
      */
     public function verify(string $zipPath): array
     {
         $errors = [];
         $zip = new ZipArchive;
+        $failed = fn (string $error) => ['ok' => false, 'errors' => [$error], 'files' => 0, 'tables' => [], 'created_at' => null, 'database_driver' => null];
 
         if (! is_file($zipPath) || $zip->open($zipPath, ZipArchive::RDONLY) !== true) {
-            return ['ok' => false, 'errors' => ["Cannot open [{$zipPath}]."], 'files' => 0, 'tables' => [], 'created_at' => null];
+            return $failed("Cannot open [{$zipPath}].");
         }
 
         $manifest = json_decode((string) $zip->getFromName(self::MANIFEST_ENTRY), true);
@@ -103,7 +114,7 @@ class BackupManager
         if (! is_array($manifest) || ! isset($manifest['files'], $manifest['tables'])) {
             $zip->close();
 
-            return ['ok' => false, 'errors' => ['Manifest is missing or unreadable.'], 'files' => 0, 'tables' => [], 'created_at' => null];
+            return $failed('Manifest is missing or unreadable.');
         }
 
         foreach ($manifest['files'] as $entry => $expectedHash) {
@@ -124,24 +135,35 @@ class BackupManager
             }
         }
 
-        $databaseCopy = $this->tempPath('srafes-verify-');
+        // Backups made before MySQL support have no driver field and are SQLite
+        $driver = $manifest['database_driver'] ?? 'sqlite';
+        $isSqlite = $driver === 'sqlite';
+        $databaseCopy = $this->tempPath('srafes-verify-', $isSqlite ? '.sqlite' : '.sql');
         $tables = [];
 
-        if (file_put_contents($databaseCopy, (string) $zip->getFromName(self::DATABASE_ENTRY)) === false) {
+        if (file_put_contents($databaseCopy, (string) $zip->getFromName($isSqlite ? self::SQLITE_ENTRY : self::MYSQL_ENTRY)) === false) {
             $errors[] = 'Could not extract the database.';
         } else {
-            $pdo = new PDO('sqlite:'.$databaseCopy);
-            $integrity = $pdo->query('PRAGMA integrity_check')->fetchColumn();
-            $pdo = null;
+            try {
+                if ($isSqlite) {
+                    $pdo = new PDO('sqlite:'.$databaseCopy);
+                    $integrity = $pdo->query('PRAGMA integrity_check')->fetchColumn();
+                    $pdo = null;
 
-            if ($integrity !== 'ok') {
-                $errors[] = "Database integrity check failed: {$integrity}";
-            }
+                    if ($integrity !== 'ok') {
+                        $errors[] = "Database integrity check failed: {$integrity}";
+                    }
 
-            $tables = $this->rowCounts($databaseCopy);
+                    $tables = $this->sqliteRowCounts($databaseCopy);
+                } else {
+                    $tables = MysqlDumper::countRows($databaseCopy);
+                }
 
-            if ($tables !== $manifest['tables']) {
-                $errors[] = 'Database row counts differ from the manifest.';
+                if ($tables !== $manifest['tables']) {
+                    $errors[] = 'Database row counts differ from the manifest.';
+                }
+            } catch (\Throwable $exception) {
+                $errors[] = 'Database could not be read: '.$exception->getMessage();
             }
         }
 
@@ -154,6 +176,7 @@ class BackupManager
             'files' => count($manifest['files']),
             'tables' => $tables,
             'created_at' => $manifest['created_at'] ?? null,
+            'database_driver' => $driver,
         ];
     }
 
@@ -179,31 +202,42 @@ class BackupManager
     /**
      * Replace the live database and uploaded files with a verified backup.
      * A safety backup of the current state is taken first, and the replaced
-     * directories are kept as "<dir>.pre-restore-<timestamp>".
+     * folders (and SQLite file) are kept as "<path>.pre-restore-<timestamp>".
      *
      * @return array{safety_backup: string, kept_directories: array<string>}
      */
     public function restore(string $zipPath): array
     {
-        $this->ensureSqlite();
-        $this->assertVerified($zipPath);
+        $driver = $this->driver();
+        $result = $this->assertVerified($zipPath);
+
+        if ($result['database_driver'] !== $driver) {
+            throw new RuntimeException("This backup holds a {$result['database_driver']} database but the site uses {$driver}. Use srafes:copy-database to move data between drivers.");
+        }
 
         $safetyBackup = $this->create();
         $suffix = '.pre-restore-'.now()->format('Ymd-His');
+        $keptDirectories = [];
 
         $zip = new ZipArchive;
         $zip->open($zipPath, ZipArchive::RDONLY);
 
-        $databasePath = config('database.connections.'.config('database.default').'.database');
-        $restoredDatabase = $this->tempPath('srafes-restore-');
-        file_put_contents($restoredDatabase, (string) $zip->getFromName(self::DATABASE_ENTRY));
+        $restoredDatabase = $this->tempPath('srafes-restore-', $driver === 'sqlite' ? '.sqlite' : '.sql');
+        file_put_contents($restoredDatabase, (string) $zip->getFromName($driver === 'sqlite' ? self::SQLITE_ENTRY : self::MYSQL_ENTRY));
 
-        DB::disconnect();
-        File::copy($databasePath, $databasePath.$suffix);
-        File::copy($restoredDatabase, $databasePath);
-        File::delete([$restoredDatabase, $databasePath.'-wal', $databasePath.'-shm']);
+        if ($driver === 'sqlite') {
+            $databasePath = config('database.connections.'.config('database.default').'.database');
 
-        $keptDirectories = [$databasePath.$suffix];
+            DB::disconnect();
+            File::copy($databasePath, $databasePath.$suffix);
+            File::copy($restoredDatabase, $databasePath);
+            File::delete([$databasePath.'-wal', $databasePath.'-shm']);
+            $keptDirectories[] = $databasePath.$suffix;
+        } else {
+            (new MysqlDumper(DB::connection()))->load($restoredDatabase);
+        }
+
+        File::delete($restoredDatabase);
 
         foreach ($this->config['directories'] as $label => $directory) {
             if (is_dir($directory)) {
@@ -255,13 +289,15 @@ class BackupManager
             ->all();
     }
 
-    private function assertVerified(string $zipPath): void
+    private function assertVerified(string $zipPath): array
     {
         $result = $this->verify($zipPath);
 
         if (! $result['ok']) {
             throw new RuntimeException('Backup failed verification: '.implode('; ', $result['errors']));
         }
+
+        return $result;
     }
 
     private function extractPrefix(ZipArchive $zip, string $prefix, string $targetDirectory): void
@@ -305,7 +341,7 @@ class BackupManager
     /**
      * @return array<string, int>
      */
-    private function rowCounts(string $sqlitePath): array
+    private function sqliteRowCounts(string $sqlitePath): array
     {
         $pdo = new PDO('sqlite:'.$sqlitePath);
 
@@ -318,18 +354,23 @@ class BackupManager
         return $counts;
     }
 
-    private function ensureSqlite(): void
+    /**
+     * @return 'sqlite'|'mysql'
+     */
+    private function driver(): string
     {
         $driver = DB::connection()->getDriverName();
 
-        if ($driver !== 'sqlite') {
-            throw new RuntimeException("srafes backups currently support SQLite only (current driver: {$driver}). Use the hosting provider's database backups for other drivers.");
-        }
+        return match ($driver) {
+            'sqlite' => 'sqlite',
+            'mysql', 'mariadb' => 'mysql',
+            default => throw new RuntimeException("srafes backups support SQLite and MySQL/MariaDB only (current driver: {$driver})."),
+        };
     }
 
-    private function tempPath(string $prefix): string
+    private function tempPath(string $prefix, string $extension): string
     {
         // VACUUM INTO refuses to overwrite, so return a path that does not exist yet
-        return sys_get_temp_dir().DIRECTORY_SEPARATOR.$prefix.bin2hex(random_bytes(8)).'.sqlite';
+        return sys_get_temp_dir().DIRECTORY_SEPARATOR.$prefix.bin2hex(random_bytes(8)).$extension;
     }
 }
