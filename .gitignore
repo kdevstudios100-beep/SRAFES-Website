@@ -1,0 +1,36 @@
+# Dependencies (reinstall with composer install / npm install)
+/vendor
+/node_modules
+
+# Environment files contain secrets (APP_KEY, DB and mail credentials)
+.env
+.env.backup
+.env.production
+.env.*.local
+!.env.example
+
+# School data never belongs in git: database files and their backups
+/database/*.sqlite
+/database/*.sqlite-journal
+/database/*.sqlite-wal
+/database/*.sqlite-shm
+
+# Uploaded files and generated runtime state (storage/* have their own .gitignore files)
+/public/storage
+/public/filament
+/public/hot
+/public/build
+/storage/*.key
+
+# Tooling / OS noise
+.phpunit.result.cache
+.phpunit.cache
+/.fleet
+/.idea
+/.vscode
+/.zed
+.DS_Store
+__MACOSX/
+Thumbs.db
+npm-debug.log
+yarn-error.log

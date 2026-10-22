@@ -1,0 +1,35 @@
+/* Typography */
+.h1 {
+    @apply text-5xl font-extrabold leading-snug sm:text-6xl sm:leading-tight xl:text-7xl xl:leading-tight;
+}
+
+.h2 {
+    @apply text-4xl font-bold leading-tight tracking-tight sm:text-5xl sm:leading-tight xl:text-6xl;
+}
+
+.h3 {
+    @apply text-3xl font-bold leading-tight tracking-tight sm:text-4xl sm:leading-tight;
+}
+
+.h4 {
+    @apply text-2xl font-bold leading-tight tracking-tight sm:text-3xl sm:leading-tight;
+}
+
+/* Buttons */
+.btn,
+.btn-sm,
+.btn-xs {
+    @apply relative inline-flex items-center justify-center rounded-full px-8 py-3 leading-normal outline-none duration-300 ease-in-out;
+}
+
+.btn {
+    @apply px-8 py-3.5;
+}
+
+.btn-sm {
+    @apply px-5 py-2.5;
+}
+
+.btn-xs {
+    @apply px-4 py-2;
+}

@@ -1,0 +1,238 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
+
+@import '../../vendor/filament/filament/resources/css/theme.css';
+
+@plugin "@tailwindcss/typography";
+@plugin "@tailwindcss/forms";
+@plugin "@tailwindcss/aspect-ratio";
+
+/* Additional styles */
+@import './additional-styles/utility-patterns.css';
+
+@source "../../app/Filament/**/*.php";
+@source '../**/*.blade.php';
+
+/* Font Families */
+@theme {
+    --font-family-sans: Roboto, sans-serif;
+    --font-family-written: 'Gochi Hand', cursive;
+}
+
+/* Colors */
+@theme {
+    /* Yellow color scale */
+    --color-yellow-50: #fffaf6;
+    --color-yellow-100: #fef7e7;
+    --color-yellow-200: #fef3da;
+    --color-yellow-300: #FDEBC2;
+    --color-yellow-400: #fbde9b;
+    --color-yellow-500: #F8D075;
+    --color-yellow-600: #F4C350;
+    --color-yellow-700: #EFB42D;
+    --color-yellow-800: #FDBE3F;
+    --color-yellow-900: #FAAF19;
+
+    /* Purple color scale */
+    --color-purple-25: #F4F0FC;
+    --color-purple-50: #f0ebfe;
+    --color-purple-100: #e0d7fc;
+    --color-purple-200: #D2C6FA;
+    --color-purple-300: #B5A1F5;
+    --color-purple-400: #7C7AC4;
+    --color-purple-500: #6260b5;
+    --color-purple-600: #49479F;
+    --color-purple-700: #2C1854;
+    --color-purple-800: #18083A;
+    --color-purple-900: #160041;
+}
+
+/* Line Heights */
+@theme {
+    --line-height-tighter: 1.1;
+    --line-height-loose: 1.875;
+}
+
+/* Font Sizes */
+@theme {
+    --font-size-2xl: 1.75rem;
+    --font-size-3xl: 2rem;
+    --font-size-4xl: 2.25rem;
+    --font-size-5xl: 2.7rem;
+    --font-size-6xl: 3.25rem;
+    --font-size-7xl: 3.75rem;
+    --font-size-8xl: 5rem;
+    --font-size-9xl: 6rem;
+}
+
+/* Spacing - Height */
+@theme {
+    --spacing-30vw: 30vw;
+}
+
+/* Border Radius */
+@theme {
+    --radius-4xl: 2.5rem;
+    --radius-5xl: 5rem;
+}
+
+/* Width - Max Width */
+@theme {
+    --width-prose: 65ch;
+}
+
+/* Transforms */
+@theme {
+    --scale-80: 0.8;
+    --scale-135: 1.35;
+
+    --rotate-4: 4deg;
+    --rotate-8: 8deg;
+    --rotate-negative-8: -8deg;
+}
+
+/* Animations */
+@theme {
+    --animate-ping: ping 2.5s cubic-bezier(0, 0, 0.3, 1) infinite;
+    --animate-horizontal-bounce: horizontal-bounce 1s infinite;
+}
+
+/* Keyframes */
+@keyframes ping {
+
+    75%,
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+
+@keyframes horizontal-bounce {
+    50% {
+        transform: translateX(25%);
+        animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+    }
+
+    0%,
+    100% {
+        transform: translateX(0);
+        animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+    }
+}
+
+/* Typography Plugin Configuration */
+@theme {
+    /* Default Typography */
+    --typography-body: var(--color-purple-800);
+    --typography-headings: var(--color-purple-900);
+    --typography-lead: var(--color-purple-900);
+    --typography-links: var(--color-purple-600);
+    --typography-links-hover: var(--color-purple-400);
+    --typography-bold: var(--color-purple-900);
+    --typography-counters: var(--color-purple-800);
+    --typography-bullets: var(--color-purple-800);
+    --typography-hr: var(--color-purple-50);
+    --typography-quotes: var(--color-purple-700);
+    --typography-quote-borders: var(--color-purple-600);
+    --typography-captions: var(--color-purple-800);
+    --typography-code: var(--color-purple-900);
+    --typography-pre-code: var(--color-purple-25);
+    --typography-pre-bg: var(--color-purple-900);
+    --typography-th-borders: var(--color-purple-100);
+    --typography-td-borders: var(--color-purple-100);
+
+    /* Inverted Typography */
+    --typography-invert-body: var(--color-purple-25);
+    --typography-invert-headings: white;
+    --typography-invert-lead: white;
+    --typography-invert-links: white;
+    --typography-invert-links-hover: var(--color-purple-300);
+    --typography-invert-bold: white;
+    --typography-invert-counters: var(--color-purple-25);
+    --typography-invert-bullets: var(--color-purple-100);
+    --typography-invert-hr: var(--color-purple-25);
+    --typography-invert-quotes: white;
+    --typography-invert-quote-borders: var(--color-purple-100);
+    --typography-invert-captions: var(--color-purple-50);
+    --typography-invert-code: white;
+    --typography-invert-pre-code: white;
+    --typography-invert-pre-bg: var(--color-purple-800);
+    --typography-invert-th-borders: var(--color-purple-50);
+    --typography-invert-td-borders: var(--color-purple-100);
+}
+
+/* Typography Size Variants */
+@layer utilities {
+    .prose-lg h1 {
+        font-size: var(--font-size-5xl);
+    }
+
+    .prose-lg h2 {
+        font-size: var(--font-size-4xl);
+    }
+
+    .prose-lg h3 {
+        font-size: var(--font-size-3xl);
+    }
+
+    .prose-xl h1 {
+        font-size: var(--font-size-6xl);
+    }
+
+    .prose-xl h2 {
+        font-size: var(--font-size-5xl);
+    }
+
+    .prose-xl h3 {
+        font-size: var(--font-size-3xl);
+    }
+}
+
+/* Custom utility classes based on the theme */
+@layer utilities {
+
+    /* Height utilities */
+    .h-30vw {
+        height: var(--spacing-30vw);
+    }
+
+    /* Max width utilities */
+    .max-w-prose {
+        max-width: var(--width-prose);
+    }
+
+    /* Font family utilities */
+    .font-written {
+        font-family: var(--font-family-written);
+    }
+
+    /* Animation utilities */
+    .animate-ping {
+        animation: var(--animate-ping);
+    }
+
+    .animate-horizontal-bounce {
+        animation: var(--animate-horizontal-bounce);
+    }
+
+    /* Rotate utilities */
+    .-rotate-8 {
+        transform: rotate(var(--rotate-negative-8));
+    }
+
+    .rotate-4 {
+        transform: rotate(var(--rotate-4));
+    }
+
+    .rotate-8 {
+        transform: rotate(var(--rotate-8));
+    }
+
+    /* Scale utilities */
+    .scale-80 {
+        transform: scale(var(--scale-80));
+    }
+
+    .scale-135 {
+        transform: scale(var(--scale-135));
+    }
+}
