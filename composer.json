@@ -14,13 +14,13 @@
         }
     ],
     "require": {
-        "php": "^8.2",
+        "php": "^8.3",
         "calebporzio/sushi": "^2.5",
         "filament/filament": "^4.0",
         "filament/spatie-laravel-media-library-plugin": "^4.0",
         "hugomyb/filament-media-action": "^4.1",
         "kenepa/translation-manager": "dev-mansoorkhan96-patch-1",
-        "laravel/framework": "^11.9",
+        "laravel/framework": "^12.69",
         "laravel/tinker": "^2.9",
         "livewire/livewire": "^3.5",
         "spatie/laravel-permission": "^6.21"

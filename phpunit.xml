@@ -27,6 +27,8 @@
         <env name="DB_DATABASE" value=":memory:" force="true"/>
         <env name="DB_URL" value="" force="true"/>
         <env name="FILESYSTEM_DISK" value="local" force="true"/>
+        <!-- Keep test noise (e.g. deliberately failing backup checks) out of the real log files -->
+        <env name="LOG_CHANNEL" value="null" force="true"/>
         <env name="MAIL_MAILER" value="array" force="true"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="QUEUE_CONNECTION" value="sync" force="true"/>
