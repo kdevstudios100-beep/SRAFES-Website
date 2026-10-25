@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\DB;
  * A student passes by passing every paper; absent counts as 0 and a fail.
  * Grades come from the overall percentage, except that failing students are
  * graded F. Positions rank passing students by total marks; equal totals
- * share a position (1, 1, 3). A student missing any mark is "incomplete" and
+ * share a position and the next total takes the next one (1, 2, 2, 3). A student missing any mark is "incomplete" and
  * gets no result, grade or position.
  */
 class ResultSheet
@@ -213,9 +213,10 @@ class ResultSheet
         $previous = null;
         $position = 0;
 
-        foreach ($passed->values() as $index => $row) {
+        // Dense ranking: the next total after a tie takes the next position, so no position is skipped
+        foreach ($passed as $row) {
             if ($row['obtained'] !== $previous) {
-                $position = $index + 1;
+                $position++;
                 $previous = $row['obtained'];
             }
 

@@ -104,7 +104,7 @@ A teacher can hold several assignments in a session, e.g. class teacher of Class
 
 - A student **passes** by passing every paper. Absent counts as 0 and a fail.
 - **Grade** from the overall percentage: A1 80%+, A 70-79, B 60-69, C 50-59, D 40-49, E 33-39, F below 33. Failing students are graded F. The scale is in `config/srafes.php` (`exams.grades`).
-- **Position** ranks passing students in the class or section by total marks; equal totals share a position.
+- **Position** ranks passing students in the class or section by total marks. Equal totals share a position and the next total takes the next one (1, 2, 2, 3), so there is always a 1st, 2nd and 3rd position holder.
 - A student missing any mark is *Incomplete*: no grade, result or position.
 
 **Finishing an exam** (Exams list → row menu):

@@ -249,12 +249,14 @@ describe('results', function () {
             ->and($rows['Hina'])->toMatchArray(['obtained' => 95, 'grade' => 'F', 'result' => ExaminationResultStatus::Fail, 'failed' => [$this->englishPaper->id]]);
     });
 
-    it('shares positions on equal totals', function () {
+    it('shares positions on equal totals without skipping the next one', function () {
+        // Bilal ties Amna on 160; Hina passes on 145
         ExamMark::where('enrollment_id', $this->a2->id)->where('exam_paper_id', $this->mathsPaper->id)->update(['obtained_marks' => 70]);
+        ExamMark::where('enrollment_id', $this->a3->id)->where('exam_paper_id', $this->englishPaper->id)->update(['obtained_marks' => 50, 'is_absent' => false]);
 
         $positions = $this->results->forGroup($this->exam, $this->groupA)->mapWithKeys(fn ($row) => [$row['enrollment']->student->first_name => $row['position']])->all();
 
-        expect($positions)->toBe(['Amna' => 1, 'Bilal' => 1, 'Hina' => null]);
+        expect($positions)->toBe(['Amna' => 1, 'Bilal' => 1, 'Hina' => 2]);
     });
 
     it('leaves students with missing marks incomplete', function () {
