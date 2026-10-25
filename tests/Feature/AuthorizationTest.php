@@ -99,3 +99,48 @@ it('defines no fee or payment permissions', function () {
 
     expect($names->filter(fn (string $name) => preg_match('/fee|payment|dues|voucher/', $name)))->toBeEmpty();
 });
+
+it('never lets a bulk delete remove your own account', function () {
+    $admin = userWithRole(UserRole::SuperAdmin);
+    $other = userWithRole(UserRole::Staff);
+
+    Livewire\Livewire::actingAs($admin)
+        ->test(App\Filament\Resources\Users\Pages\ListUsers::class)
+        ->selectTableRecords([$admin->getKey(), $other->getKey()])
+        ->callAction(Filament\Actions\Testing\TestAction::make('delete')->table()->bulk());
+
+    expect(App\Models\User::find($admin->id))->not->toBeNull()
+        ->and(App\Models\User::find($other->id))->toBeNull();
+});
+
+it('ignores crafted requests that change your own roles or active flag', function () {
+    $admin = userWithRole(UserRole::SuperAdmin);
+
+    Livewire\Livewire::actingAs($admin)
+        ->test(App\Filament\Resources\Users\Pages\EditUser::class, ['record' => $admin->getKey()])
+        ->set('data.is_active', false)
+        ->set('data.roles', [])
+        ->call('save');
+
+    $admin->refresh();
+    expect($admin->is_active)->toBeTrue()
+        ->and($admin->hasRole(UserRole::SuperAdmin->value))->toBeTrue();
+});
+
+it('guards site settings by permission, not just panel access', function () {
+    // A role with panel access but no site content permission, like one a future phase might add
+    $user = App\Models\User::factory()->create(['is_active' => true]);
+    $user->assignRole(Role::create(['name' => 'panel_only', 'guard_name' => 'web'])->givePermissionTo(Permission::AccessAdminPanel->value));
+
+    $this->actingAs($user)->get('/admin/site-settings')->assertForbidden();
+
+    $this->actingAs(userWithRole(UserRole::Staff))->get('/admin/site-settings')->assertOk();
+});
+
+it('lets only careers managers preview closed job posts', function () {
+    $closed = App\Models\JobPost::factory()->create(['is_active' => false]);
+
+    $this->actingAs(userWithRole(UserRole::Teacher))->get(route('careers.show', $closed))->assertNotFound();
+    $this->actingAs(userWithRole(UserRole::Staff, active: false))->get(route('careers.show', $closed))->assertNotFound();
+    $this->actingAs(userWithRole(UserRole::Staff))->get(route('careers.show', $closed))->assertOk();
+});

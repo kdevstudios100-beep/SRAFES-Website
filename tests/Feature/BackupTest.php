@@ -119,3 +119,18 @@ it('keeps only the configured number of backups', function () {
 
     expect(BackupManager::fromConfig()->list())->toHaveCount(2);
 });
+
+it('restores only files covered by the manifest checksums', function () {
+    $path = BackupManager::fromConfig()->create();
+
+    // A file slipped into the zip after the backup was made has no checksum, so verification can't vouch for it
+    $zip = new ZipArchive;
+    $zip->open($path);
+    $zip->addFromString('files/uploads/planted.php', '<?php echo "not from the backup";');
+    $zip->close();
+
+    $this->artisan('srafes:backup:restore', ['file' => $path, '--force' => true])->assertSuccessful();
+
+    expect(File::exists($this->sandbox.'/uploads/planted.php'))->toBeFalse()
+        ->and(File::get($this->sandbox.'/uploads/1/photo.jpg'))->toBe('original photo');
+});

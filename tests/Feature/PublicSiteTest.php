@@ -83,3 +83,24 @@ it('deletes a student together with their results', function () {
 
     expect(App\Models\ExaminationResult::count())->toBe(0);
 });
+
+it('strips scripts from rich content but keeps its formatting', function () {
+    $html = '<h2>Heading</h2><p><strong>Bold</strong> <a href="https://example.org">link</a></p><ul><li>Item</li></ul>'
+        .'<script>alert(1)</script><img src="x" onerror="alert(2)">';
+
+    $announcement = Announcement::create(['title' => 'Notice', 'description' => 'd', 'content' => $html, 'is_recurring' => false, 'start_date' => now()]);
+    $jobPost = JobPost::factory()->create(['content' => $html, 'is_active' => true, 'application_deadline' => null]);
+
+    foreach ([route('announcement.show', $announcement), route('careers.show', $jobPost)] as $url) {
+        $this->get($url)->assertOk()
+            ->assertSee('<h2>Heading</h2>', false)
+            ->assertSee('<a href="https://example.org">link</a>', false)
+            ->assertSee('<li>Item</li>', false)
+            ->assertDontSee('alert(1)', false)
+            ->assertDontSee('onerror', false);
+    }
+});
+
+it('renders every public page for a signed-in admin', function (string $page) {
+    $this->actingAs(userWithRole(App\Enum\UserRole::SuperAdmin))->get($page)->assertOk();
+})->with(['/', '/about', '/scholarships', '/gallery', '/contact', '/examination-results', '/careers']);

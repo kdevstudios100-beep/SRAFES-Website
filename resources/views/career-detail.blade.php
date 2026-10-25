@@ -38,7 +38,8 @@
                     <div
                         class="prose mx-auto mt-12 max-w-3xl prose-headings:text-purple-900 prose-a:text-purple-600 prose-strong:text-purple-900"
                     >
-                        {!! $jobPost->content !!}
+                        {{-- Rich editor HTML arrives from the browser, so it must be sanitized before output --}}
+                        {!! str($jobPost->content ?? '')->sanitizeHtml() !!}
                     </div>
 
                     <div class="mx-auto mt-16 max-w-3xl">

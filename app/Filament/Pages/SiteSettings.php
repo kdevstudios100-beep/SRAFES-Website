@@ -20,6 +20,12 @@ class SiteSettings extends Page
 
     public array $data = [];
 
+    // Pages are not covered by model policies automatically, so check SiteSettingPolicy here
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->can('viewAny', SiteSetting::class) ?? false;
+    }
+
     public function mount()
     {
         $this->form->fill(SiteSetting::firstOrCreate()->toArray());
@@ -86,6 +92,9 @@ class SiteSettings extends Page
 
     public function save()
     {
+        // Livewire calls skip mount(), so re-check in case access was revoked mid-session
+        abort_unless(static::canAccess(), 403);
+
         $state = $this->form->getState();
 
         $siteSetting = SiteSetting::firstOrCreate();

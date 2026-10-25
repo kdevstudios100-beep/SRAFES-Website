@@ -17,7 +17,8 @@
                     <div
                         class="prose mx-auto mt-12 max-w-3xl prose-figcaption:hidden prose-img:rounded-xl"
                     >
-                        {!! $announcement->content !!}
+                        {{-- Rich editor HTML arrives from the browser, so it must be sanitized before output --}}
+                        {!! str($announcement->content ?? '')->sanitizeHtml() !!}
                     </div>
                 </div>
             </div>

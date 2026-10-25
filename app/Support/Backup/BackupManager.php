@@ -222,6 +222,9 @@ class BackupManager
         $zip = new ZipArchive;
         $zip->open($zipPath, ZipArchive::RDONLY);
 
+        // Only files covered by a verified checksum are restored; anything else added to the zip is ignored
+        $checkedEntries = array_keys(json_decode((string) $zip->getFromName(self::MANIFEST_ENTRY), true)['files']);
+
         $restoredDatabase = $this->tempPath('srafes-restore-', $driver === 'sqlite' ? '.sqlite' : '.sql');
         file_put_contents($restoredDatabase, (string) $zip->getFromName($driver === 'sqlite' ? self::SQLITE_ENTRY : self::MYSQL_ENTRY));
 
@@ -246,7 +249,7 @@ class BackupManager
             }
 
             File::ensureDirectoryExists($directory);
-            $this->extractPrefix($zip, "files/{$label}/", $directory);
+            $this->extractPrefix($zip, "files/{$label}/", $directory, $checkedEntries);
         }
 
         $zip->close();
@@ -300,12 +303,17 @@ class BackupManager
         return $result;
     }
 
-    private function extractPrefix(ZipArchive $zip, string $prefix, string $targetDirectory): void
+    /**
+     * @param  array<string>  $checkedEntries  Zip entries listed (with checksums) in the manifest
+     */
+    private function extractPrefix(ZipArchive $zip, string $prefix, string $targetDirectory, array $checkedEntries): void
     {
+        $checkedEntries = array_flip($checkedEntries);
+
         for ($i = 0; $i < $zip->numFiles; $i++) {
             $entry = $zip->getNameIndex($i);
 
-            if (! str_starts_with($entry, $prefix) || str_ends_with($entry, '/')) {
+            if (! str_starts_with($entry, $prefix) || str_ends_with($entry, '/') || ! isset($checkedEntries[$entry])) {
                 continue;
             }
 

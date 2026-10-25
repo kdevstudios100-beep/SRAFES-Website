@@ -37,8 +37,8 @@ Route::middleware(SetLanguage::class)->group(function () {
         return view('careers', ['jobPosts' => $jobPosts]);
     })->name('careers');
     Route::get('/careers/{jobPost}', function (JobPost $jobPost) {
-        // Logged-in admins can still preview closed posts from the panel
-        abort_unless($jobPost->isOpen() || auth()->check(), 404);
+        // Careers managers can still preview closed posts from the panel
+        abort_unless($jobPost->isOpen() || auth()->user()?->can('view', $jobPost), 404);
 
         return view('career-detail', ['jobPost' => $jobPost]);
     })->name('careers.show');
