@@ -89,6 +89,31 @@ Attendance % = (present + late) ÷ (days marked − leave). Approved leave neith
 
 Attendance belongs to the student's placement on that day. After a transfer, earlier days stay with the old class and the transfer day itself belongs to the new class. Promotion and leaving never remove attendance.
 
+## Exams
+
+**Setup** (Staff, Principal, Super Admin; admin panel → **Exams**):
+1. Give each class its subjects (Academics → Classes → Subjects). A subject set for one section only is sat by that section only.
+2. Create the exam (e.g. *Mid-term*) in its session. On the exam page, *Add a class's subjects* creates one paper per subject for a class; or add papers one by one. Each paper has maximum marks and pass marks (33% suggested, editable).
+3. Teacher assignments (Academics → Teacher Assignments) decide who marks what: a **subject teacher** enters their subject; a **class teacher** enters every paper of their class or section and sees its result sheet. An assignment without a section covers every section of the class.
+
+**Entering marks** (`/teacher/enter-marks`, or Exams → Enter marks in the admin panel): pick the exam, class and subject, type whole marks or tick *Absent*, save. Sheets can be saved part-filled; a blank mark is "not entered yet".
+
+**Results** (Exam results page): every paper, total, percentage, grade, result and position per student, with a CSV download, *Print result sheet* (the whole class on landscape pages, with subject pass counts, highest marks and the pass rate) and *Print result cards* (one card per student per page). Both open in a new tab; use the browser's print / save as PDF.
+
+A teacher can hold several assignments in a session, e.g. class teacher of Class 1 - A and Maths teacher of Class 3. *Enter marks* lists all of them; result sheets and printing are for the class-teacher class only.
+
+- A student **passes** by passing every paper. Absent counts as 0 and a fail.
+- **Grade** from the overall percentage: A1 80%+, A 70-79, B 60-69, C 50-59, D 40-49, E 33-39, F below 33. Failing students are graded F. The scale is in `config/srafes.php` (`exams.grades`).
+- **Position** ranks passing students in the class or section by total marks; equal totals share a position.
+- A student missing any mark is *Incomplete*: no grade, result or position.
+
+**Finishing an exam** (Exams list → row menu):
+1. *Lock* when marking is done. Nobody can change marks while locked; *Unlock* reopens it.
+2. *Publish results* copies each student's total, grade and result to Examination Results, so families can look them up on the public results page by admission number. Every mark must be entered first.
+3. *Unpublish results* removes them again (marks are kept); unpublish before unlocking to correct a mark, then lock and publish again. Results entered by hand under Examination Results are never touched.
+
+Exams and papers that hold marks cannot be deleted. Marks belong to the student's placement, like attendance, so transfers and promotion never move or remove them.
+
 ## Backups
 
 Each backup is one zip in `BACKUP_PATH` (default `storage/app/backups`) holding a

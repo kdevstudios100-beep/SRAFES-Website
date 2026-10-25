@@ -74,4 +74,29 @@ return [
         'low_attendance_percent' => 75,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Exams
+    |--------------------------------------------------------------------------
+    |
+    | grades: lowest percentage for each grade, highest grade first; anything
+    | below the last one is "F". pass_percent: the pass mark suggested for new
+    | papers (each paper's pass mark can still be edited). A student passes an
+    | exam only by passing every paper.
+    |
+    */
+
+    'exams' => [
+        'grades' => [
+            'A1' => 80,
+            'A' => 70,
+            'B' => 60,
+            'C' => 50,
+            'D' => 40,
+            'E' => 33,
+        ],
+        'fail_grade' => 'F',
+        'pass_percent' => 33,
+    ],
+
 ];

@@ -62,6 +62,11 @@ class Enrollment extends Model
         return $this->hasMany(AttendanceRecord::class);
     }
 
+    public function examMarks(): HasMany
+    {
+        return $this->hasMany(ExamMark::class);
+    }
+
     // Placements in force on $date. The end date is exclusive: on a transfer day the student
     // belongs to the new placement only, so they never appear on two registers.
     public function scopeCoveringDate(Builder $query, string $date): Builder

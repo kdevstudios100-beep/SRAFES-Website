@@ -16,6 +16,7 @@ class ExaminationResult extends Model implements HasMedia
     use InteractsWithMedia;
 
     protected $fillable = [
+        'exam_id',
         'student_id',
         'academic_class_id',
         'year',
@@ -36,6 +37,12 @@ class ExaminationResult extends Model implements HasMedia
     public function academicClass(): BelongsTo
     {
         return $this->belongsTo(AcademicClass::class);
+    }
+
+    // Set when the result was published from an exam's marks; null for results entered by hand
+    public function exam(): BelongsTo
+    {
+        return $this->belongsTo(Exam::class);
     }
 
     public function student(): BelongsTo

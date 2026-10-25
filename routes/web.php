@@ -1,11 +1,18 @@
 <?php
 
+use App\Http\Controllers\ExamPrintController;
 use App\Models\Announcement;
 use App\Models\JobPost;
 use Illuminate\Support\Facades\Route;
 use Kenepa\TranslationManager\Http\Middleware\SetLanguage;
 
 Route::redirect('/login', '/admin/login')->name('login');
+
+// Opened from the Exam results page in either panel; the controller checks the user may see this class
+Route::middleware('auth')->controller(ExamPrintController::class)->group(function () {
+    Route::get('/exams/{exam}/result-cards', 'cards')->name('exams.result-cards');
+    Route::get('/exams/{exam}/result-sheet', 'sheet')->name('exams.result-sheet');
+});
 
 Route::middleware(SetLanguage::class)->group(function () {
     Route::get('/', function () {

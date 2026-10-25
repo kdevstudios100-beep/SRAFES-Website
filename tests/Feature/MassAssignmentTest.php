@@ -7,6 +7,9 @@ use App\Models\AttendanceRecord;
 use App\Models\Employee;
 use App\Models\Enrollment;
 use App\Models\ExaminationResult;
+use App\Models\Exam;
+use App\Models\ExamMark;
+use App\Models\ExamPaper;
 use App\Models\JobApplication;
 use App\Models\JobPost;
 use App\Models\Section;
@@ -34,7 +37,7 @@ it('declares explicit fillable attributes that never include keys or tokens', fu
     AcademicClass::class, Announcement::class, Employee::class, ExaminationResult::class,
     JobApplication::class, JobPost::class, SiteSetting::class, Student::class, User::class,
     AcademicSession::class, Section::class, Subject::class, SubjectAssignment::class, Enrollment::class,
-    TeacherAssignment::class, AttendanceRecord::class,
+    TeacherAssignment::class, AttendanceRecord::class, Exam::class, ExamPaper::class, ExamMark::class,
 ]);
 
 it('rejects attributes that are not fillable instead of saving them', function () {

@@ -7,10 +7,12 @@ use App\Models\AcademicSession;
 use App\Models\Enrollment;
 use App\Models\Section;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 /**
  * One attendance register: a class (or one of its sections) in a session.
- * Classes without sections are registered as a whole.
+ * Classes without sections are registered as a whole. Exams use the same
+ * groups for mark sheets and result sheets.
  */
 final class AttendanceGroup
 {
@@ -64,5 +66,44 @@ final class AttendanceGroup
     public function is(self $other): bool
     {
         return $this->key() === $other->key();
+    }
+
+    /**
+     * Every class (or section) that has had at least one placement in $session, in class order.
+     *
+     * @return Collection<int, self>
+     */
+    public static function allIn(AcademicSession $session): Collection
+    {
+        $used = Enrollment::query()
+            ->where('academic_session_id', $session->id)
+            ->select(['academic_class_id', 'section_id'])
+            ->distinct()
+            ->get();
+
+        $classes = AcademicClass::query()->whereIn('id', $used->pluck('academic_class_id'))->ordered()->get();
+        $sections = Section::query()->whereIn('id', $used->pluck('section_id')->filter())->get()->keyBy('id');
+
+        return $classes->flatMap(fn (AcademicClass $class) => $used
+            ->where('academic_class_id', $class->id)
+            ->sortBy(fn ($row) => $row->section_id ? $sections[$row->section_id]->name : '')
+            ->map(fn ($row) => new self($session, $class, $row->section_id ? $sections[$row->section_id] : null)))
+            ->values();
+    }
+
+    /**
+     * Roll-number order, students without a roll number last, then by name.
+     *
+     * @param  Collection<int, Enrollment>  $enrollments  with the student loaded
+     * @return Collection<int, Enrollment>
+     */
+    public static function inRollOrder(Collection $enrollments): Collection
+    {
+        return $enrollments
+            ->sortBy([
+                fn (Enrollment $a, Enrollment $b) => strnatcasecmp($a->roll_number ?? "\u{FFFF}", $b->roll_number ?? "\u{FFFF}"),
+                fn (Enrollment $a, Enrollment $b) => strnatcasecmp($a->student->name, $b->student->name),
+            ])
+            ->values();
     }
 }

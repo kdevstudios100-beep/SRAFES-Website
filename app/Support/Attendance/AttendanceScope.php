@@ -3,10 +3,8 @@
 namespace App\Support\Attendance;
 
 use App\Enum\Permission;
-use App\Models\AcademicClass;
 use App\Models\AcademicSession;
 use App\Models\Enrollment;
-use App\Models\Section;
 use App\Models\TeacherAssignment;
 use App\Models\User;
 use Illuminate\Support\Carbon;
@@ -37,7 +35,7 @@ class AttendanceScope
     public function groupsFor(User $user, AcademicSession $session): Collection
     {
         if ($this->canManageAll($user)) {
-            return $this->allGroups($session);
+            return AttendanceGroup::allIn($session);
         }
 
         if (! $this->allows($user, Permission::MarkAttendance)) {
@@ -92,38 +90,10 @@ class AttendanceScope
      */
     public function roster(AttendanceGroup $group, Carbon $date): Collection
     {
-        return $group->enrollments()
+        return AttendanceGroup::inRollOrder($group->enrollments()
             ->coveringDate($date->toDateString())
             ->with('student')
-            ->get()
-            ->sortBy([
-                fn (Enrollment $a, Enrollment $b) => strnatcasecmp($a->roll_number ?? "\u{FFFF}", $b->roll_number ?? "\u{FFFF}"),
-                fn (Enrollment $a, Enrollment $b) => strnatcasecmp($a->student->name, $b->student->name),
-            ])
-            ->values();
-    }
-
-    /**
-     * Every class (or section) that has had at least one placement in $session.
-     *
-     * @return Collection<int, AttendanceGroup>
-     */
-    private function allGroups(AcademicSession $session): Collection
-    {
-        $used = Enrollment::query()
-            ->where('academic_session_id', $session->id)
-            ->select(['academic_class_id', 'section_id'])
-            ->distinct()
-            ->get();
-
-        $classes = AcademicClass::query()->whereIn('id', $used->pluck('academic_class_id'))->ordered()->get();
-        $sections = Section::query()->whereIn('id', $used->pluck('section_id')->filter())->get()->keyBy('id');
-
-        return $classes->flatMap(fn (AcademicClass $class) => $used
-            ->where('academic_class_id', $class->id)
-            ->sortBy(fn ($row) => $row->section_id ? $sections[$row->section_id]->name : '')
-            ->map(fn ($row) => new AttendanceGroup($session, $class, $row->section_id ? $sections[$row->section_id] : null)))
-            ->values();
+            ->get());
     }
 
     private function allows(User $user, Permission $permission): bool

@@ -26,6 +26,10 @@ enum Permission: string
     // Mark and review attendance for every section, on any date
     case ManageAttendance = 'manage_attendance';
     case ManageTeacherAssignments = 'manage_teacher_assignments';
+    // Enter marks for papers one teaches, or every paper of one's class-teacher sections, while the exam is open
+    case EnterMarks = 'enter_marks';
+    // Set up exams and papers, enter any marks, lock exams and publish their results
+    case ManageExams = 'manage_exams';
     case ViewExaminationResults = 'view_examination_results';
     case ManageExaminationResults = 'manage_examination_results';
     case ManageCareers = 'manage_careers';
