@@ -87,6 +87,12 @@ return [
     */
 
     'exams' => [
+        // Printed on result sheets and result cards, next to public/images/logo-emblem.png
+        'school_name' => env('SCHOOL_NAME', 'Shaheed Rajib Anmol Free Education System Higher Secondary School'),
+
+        // Positions up to this one are highlighted as position holders
+        'position_holders' => 3,
+
         'grades' => [
             'A1' => 80,
             'A' => 70,

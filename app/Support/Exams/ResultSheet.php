@@ -103,6 +103,25 @@ class ResultSheet
         return $this->scale->grade($mark->obtained_marks / max($paper->total_marks, 1) * 100);
     }
 
+    // Top positions (config srafes.exams.position_holders), highlighted on sheets and cards
+    public function isPositionHolder(?int $position): bool
+    {
+        return $position !== null && $position <= (int) config('srafes.exams.position_holders', 3);
+    }
+
+    // 1st, 2nd, 3rd, 4th, 11th, 21st ...
+    public function ordinal(int $position): string
+    {
+        $suffix = in_array($position % 100, [11, 12, 13], true) ? 'th' : match ($position % 10) {
+            1 => 'st',
+            2 => 'nd',
+            3 => 'rd',
+            default => 'th',
+        };
+
+        return $position.$suffix;
+    }
+
     public function lock(Exam $exam): void
     {
         if ($exam->isLocked()) {

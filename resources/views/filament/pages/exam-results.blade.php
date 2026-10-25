@@ -79,7 +79,8 @@
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-white/5">
                             @foreach ($this->rows as $row)
-                                <tr wire:key="result-{{ $row['enrollment']->id }}">
+                                @php($holder = app(\App\Support\Exams\ResultSheet::class)->isPositionHolder($row['position']))
+                                <tr wire:key="result-{{ $row['enrollment']->id }}" @class(['bg-success-50 dark:bg-success-500/10' => $holder])>
                                     <td class="py-2 pe-4 text-gray-500 dark:text-gray-400">{{ $row['enrollment']->roll_number ?? '-' }}</td>
                                     <td class="py-2 pe-4">
                                         <div class="font-medium text-gray-950 dark:text-white">{{ $row['enrollment']->student->name }}</div>
@@ -105,7 +106,13 @@
                                             <x-filament::badge color="gray">Incomplete</x-filament::badge>
                                         @endif
                                     </td>
-                                    <td class="py-2 text-right tabular-nums">{{ $row['position'] ?? '-' }}</td>
+                                    <td class="py-2 text-right tabular-nums">
+                                        @if ($holder)
+                                            <x-filament::badge color="success" class="inline-flex">{{ app(\App\Support\Exams\ResultSheet::class)->ordinal($row['position']) }}</x-filament::badge>
+                                        @else
+                                            {{ $row['position'] ?? '-' }}
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>

@@ -111,6 +111,15 @@ describe('grading', function () {
         [100, 'A1'], [80, 'A1'], [79.99, 'A'], [70, 'A'], [65, 'B'], [55, 'C'], [45, 'D'], [33, 'E'], [32.99, 'F'], [0, 'F'],
     ]);
 
+    it('writes positions as ordinals and highlights the top three', function () {
+        $sheet = app(ResultSheet::class);
+
+        expect(array_map($sheet->ordinal(...), [1, 2, 3, 4, 11, 12, 13, 21, 22, 101]))->toBe(['1st', '2nd', '3rd', '4th', '11th', '12th', '13th', '21st', '22nd', '101st'])
+            ->and($sheet->isPositionHolder(3))->toBeTrue()
+            ->and($sheet->isPositionHolder(4))->toBeFalse()
+            ->and($sheet->isPositionHolder(null))->toBeFalse();
+    });
+
     it('suggests a pass mark of 33 percent, rounded up', function () {
         expect(app(GradingScale::class)->suggestedPassMarks(100))->toBe(33)
             ->and(app(GradingScale::class)->suggestedPassMarks(50))->toBe(17)
@@ -301,7 +310,7 @@ describe('results', function () {
     it('prints result cards for allowed users only', function () {
         $url = route('exams.result-cards', ['exam' => $this->exam, 'group' => $this->groupA->key()]);
 
-        $this->actingAs($this->classTeacher)->get($url)->assertOk()->assertSee('Amna')->assertSee('1 of 3')->assertDontSee('Chand');
+        $this->actingAs($this->classTeacher)->get($url)->assertOk()->assertSee('Amna')->assertSee('1st of 3')->assertSee('1st position in Class 5 - A')->assertSee('Shaheed Rajib Anmol Free Education System Higher Secondary School')->assertSee('logo-emblem.png')->assertDontSee('Chand');
         $this->actingAs($this->mathsTeacher)->get($url)->assertForbidden();
         $this->actingAs($this->staff)->get(route('exams.result-cards', ['exam' => $this->exam, 'group' => $this->groupB->key()]))->assertOk()->assertSee('Chand');
         $this->actingAs($this->staff)->get(route('exams.result-cards', ['exam' => $this->exam, 'group' => 'nonsense']))->assertNotFound();
@@ -314,6 +323,8 @@ describe('results', function () {
             ->assertSeeInOrder(['Amna', 'Bilal', 'Hina'])
             ->assertSee('Abs')
             ->assertSee('Pass rate:')
+            ->assertSee('1st position')
+            ->assertSee('logo-emblem.png')
             ->assertSee('33.3%')
             ->assertDontSee('Chand');
         $this->actingAs($this->mathsTeacher)->get($url)->assertForbidden();

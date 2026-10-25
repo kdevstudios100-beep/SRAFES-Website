@@ -6,15 +6,19 @@
     <meta name="robots" content="noindex">
     <title>Result cards · {{ $exam->name }} · {{ $group->label() }}</title>
     <style>
-        :root { --ink: #111827; --muted: #6b7280; --line: #d1d5db; --fail: #b91c1c; --pass: #047857; }
+        :root { --ink: #111827; --muted: #6b7280; --line: #d1d5db; --fail: #b91c1c; --pass: #047857; --holder: #166534; --holder-bg: #dcfce7; }
         * { box-sizing: border-box; }
         body { margin: 0; background: #f3f4f6; color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
         .toolbar { position: sticky; top: 0; display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 12px 16px; background: #fff; border-bottom: 1px solid var(--line); }
         .toolbar button { padding: 8px 16px; border: 0; border-radius: 6px; background: #047857; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
         .card { max-width: 800px; margin: 24px auto; padding: 32px; background: #fff; border: 1px solid var(--line); border-radius: 8px; }
-        .head { text-align: center; border-bottom: 2px solid var(--ink); padding-bottom: 12px; margin-bottom: 16px; }
-        .head h1 { margin: 0; font-size: 22px; letter-spacing: .02em; }
-        .head p { margin: 4px 0 0; color: var(--muted); }
+        .letterhead { display: flex; align-items: center; justify-content: center; gap: 16px; border-bottom: 3px double var(--holder); padding-bottom: 12px; margin-bottom: 16px; text-align: center; }
+        .letterhead img { width: 84px; height: auto; flex: none; }
+        .letterhead h1 { margin: 0; font-size: 19px; line-height: 1.25; color: var(--holder); text-transform: uppercase; letter-spacing: .03em; }
+        .letterhead p { margin: 4px 0 0; color: var(--ink); font-weight: 600; }
+        .ribbon { margin: -4px 0 16px; padding: 8px 12px; border: 1px solid var(--holder); border-left-width: 6px; border-radius: 6px; background: var(--holder-bg); color: var(--holder); font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: .05em; }
+        .summary .holder { border-color: var(--holder); background: var(--holder-bg); }
+        .summary .holder strong { color: var(--holder); }
         .details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 24px; margin-bottom: 16px; }
         .details span { color: var(--muted); }
         table { width: 100%; border-collapse: collapse; }
@@ -37,6 +41,7 @@
             .details, .summary { grid-template-columns: 1fr 1fr; }
         }
         @media print {
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             body { background: #fff; }
             .toolbar { display: none; }
             .card { margin: 0 auto; border: 0; border-radius: 0; page-break-after: always; break-after: page; }
@@ -53,10 +58,11 @@
     @foreach ($rows as $row)
         @php($student = $row['enrollment']->student)
         <section class="card">
-            <div class="head">
-                <h1>{{ config('app.name') }}</h1>
-                <p>Result card · {{ $exam->name }} · Session {{ $exam->academicSession->name }}@if ($exam->held_on) · {{ $exam->held_on->format('F Y') }}@endif</p>
-            </div>
+            @include('exams.partials.letterhead', ['title' => 'Result card · '.$exam->name.' · Session '.$exam->academicSession->name.($exam->held_on ? ' · '.$exam->held_on->format('F Y') : '')])
+
+            @if ($sheet->isPositionHolder($row['position']))
+                <div class="ribbon">{{ $sheet->ordinal($row['position']) }} position in {{ $group->label() }}</div>
+            @endif
 
             <div class="details">
                 <div><span>Name:</span> <strong>{{ $student->name }}</strong></div>
@@ -111,7 +117,7 @@
                         {{ $row['result']?->getLabel() ?? 'Incomplete' }}
                     </strong>
                 </div>
-                <div><span>Position</span><strong>{{ $row['position'] ? $row['position'].' of '.$classSize : '-' }}</strong></div>
+                <div @class(['holder' => $sheet->isPositionHolder($row['position'])])><span>Position</span><strong>{{ $row['position'] ? $sheet->ordinal($row['position']).' of '.$classSize : '-' }}</strong></div>
             </div>
 
             <p class="legend">Grades: {{ $legend }}. A student passes by passing every subject.</p>

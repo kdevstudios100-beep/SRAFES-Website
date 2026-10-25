@@ -8,17 +8,25 @@
     @php
         $tally = $rows->countBy(fn ($row) => $row['result']?->value ?? 'incomplete');
         $marked = fn ($paper) => $rows->map(fn ($row) => $row['marks'][$paper->id])->filter();
+        $holders = $rows->filter(fn ($row) => $sheet->isPositionHolder($row['position']))->sortBy('position')->values();
     @endphp
     <style>
-        :root { --ink: #111827; --muted: #6b7280; --line: #9ca3af; --fail: #b91c1c; --pass: #047857; }
+        :root { --ink: #111827; --muted: #6b7280; --line: #9ca3af; --fail: #b91c1c; --pass: #047857; --holder: #166534; --holder-bg: #dcfce7; }
         * { box-sizing: border-box; }
         body { margin: 0; background: #f3f4f6; color: var(--ink); font: 13px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
         .toolbar { position: sticky; top: 0; z-index: 1; display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 12px 16px; background: #fff; border-bottom: 1px solid #d1d5db; }
         .toolbar button { padding: 8px 16px; border: 0; border-radius: 6px; background: #047857; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
         .page { max-width: 1200px; margin: 24px auto; padding: 24px; background: #fff; border: 1px solid #d1d5db; border-radius: 8px; }
-        .head { text-align: center; border-bottom: 2px solid var(--ink); padding-bottom: 10px; margin-bottom: 12px; }
-        .head h1 { margin: 0; font-size: 20px; letter-spacing: .02em; }
-        .head p { margin: 4px 0 0; color: var(--muted); }
+        .letterhead { display: flex; align-items: center; justify-content: center; gap: 16px; border-bottom: 3px double var(--holder); padding-bottom: 10px; margin-bottom: 12px; text-align: center; }
+        .letterhead img { width: 84px; height: auto; flex: none; }
+        .letterhead h1 { margin: 0; font-size: 21px; line-height: 1.2; color: var(--holder); text-transform: uppercase; letter-spacing: .03em; }
+        .letterhead p { margin: 4px 0 0; color: var(--ink); font-weight: 600; }
+        .holders { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+        .holder-card { flex: 1 1 200px; padding: 8px 12px; border: 1px solid var(--holder); border-left-width: 6px; border-radius: 6px; background: var(--holder-bg); }
+        .holder-card span { display: block; font-size: 11px; font-weight: 700; color: var(--holder); text-transform: uppercase; letter-spacing: .05em; }
+        .holder-card strong { font-size: 15px; }
+        tr.holder td { background: var(--holder-bg); font-weight: 600; }
+        .badge { display: inline-block; padding: 1px 8px; border-radius: 999px; background: var(--holder); color: #fff; font-size: 11px; font-weight: 700; }
         .scroll { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 4px 6px; border: 1px solid var(--line); text-align: left; white-space: nowrap; }
@@ -45,7 +53,7 @@
             .scroll { overflow: visible; }
             thead { display: table-header-group; }
             tr { break-inside: avoid; }
-            th { background: #f3f4f6 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
     </style>
 </head>
@@ -56,10 +64,19 @@
     </div>
 
     <main class="page">
-        <div class="head">
-            <h1>{{ config('app.name') }}</h1>
-            <p>Result sheet · {{ $exam->name }} · {{ $group->label() }} · Session {{ $exam->academicSession->name }}@if ($exam->held_on) · {{ $exam->held_on->format('F Y') }}@endif</p>
-        </div>
+        @include('exams.partials.letterhead', ['title' => 'Result sheet · '.$exam->name.' · '.$group->label().' · Session '.$exam->academicSession->name.($exam->held_on ? ' · '.$exam->held_on->format('F Y') : '')])
+
+        @if ($holders->isNotEmpty())
+            <div class="holders">
+                @foreach ($holders as $row)
+                    <div class="holder-card">
+                        <span>{{ $sheet->ordinal($row['position']) }} position</span>
+                        <strong>{{ $row['enrollment']->student->name }}</strong>
+                        <div>{{ $row['obtained'] }} / {{ $row['total'] }} · {{ number_format($row['percent'], 1) }}% · Grade {{ $row['grade'] }}</div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
 
         <div class="scroll">
             <table>
@@ -80,7 +97,7 @@
                 </thead>
                 <tbody>
                     @forelse ($rows as $row)
-                        <tr>
+                        <tr @class(['holder' => $sheet->isPositionHolder($row['position'])])>
                             <td>{{ $row['enrollment']->roll_number ?? '-' }}</td>
                             <td>{{ $row['enrollment']->student->admission_number }}</td>
                             <td class="name">{{ $row['enrollment']->student->name }}</td>
@@ -96,7 +113,13 @@
                             <td @class(['result-pass' => $row['result']?->value === 'pass', 'result-fail' => $row['result']?->value === 'fail'])>
                                 {{ $row['result']?->getLabel() ?? 'Incomplete' }}
                             </td>
-                            <td class="num">{{ $row['position'] ?? '-' }}</td>
+                            <td class="num">
+                                @if ($sheet->isPositionHolder($row['position']))
+                                    <span class="badge">{{ $sheet->ordinal($row['position']) }}</span>
+                                @else
+                                    {{ $row['position'] ?? '-' }}
+                                @endif
+                            </td>
                         </tr>
                     @empty
                         <tr><td colspan="{{ $papers->count() + 8 }}">No students are enrolled here.</td></tr>
