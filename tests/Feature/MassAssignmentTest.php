@@ -3,6 +3,7 @@
 use App\Models\AcademicClass;
 use App\Models\AcademicSession;
 use App\Models\Announcement;
+use App\Models\AttendanceRecord;
 use App\Models\Employee;
 use App\Models\Enrollment;
 use App\Models\ExaminationResult;
@@ -13,6 +14,7 @@ use App\Models\SiteSetting;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\SubjectAssignment;
+use App\Models\TeacherAssignment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\MassAssignmentException;
 use Illuminate\Database\Eloquent\Model;
@@ -32,6 +34,7 @@ it('declares explicit fillable attributes that never include keys or tokens', fu
     AcademicClass::class, Announcement::class, Employee::class, ExaminationResult::class,
     JobApplication::class, JobPost::class, SiteSetting::class, Student::class, User::class,
     AcademicSession::class, Section::class, Subject::class, SubjectAssignment::class, Enrollment::class,
+    TeacherAssignment::class, AttendanceRecord::class,
 ]);
 
 it('rejects attributes that are not fillable instead of saving them', function () {

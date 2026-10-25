@@ -57,4 +57,21 @@ return [
         'import_max_rows' => 2000,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Attendance
+    |--------------------------------------------------------------------------
+    |
+    | teacher_edit_days: how many days back a teacher may mark or correct
+    | attendance (0 = today only). Staff with "manage attendance" can always
+    | correct any date. low_attendance_percent: reports highlight students
+    | below this.
+    |
+    */
+
+    'attendance' => [
+        'teacher_edit_days' => (int) env('ATTENDANCE_TEACHER_EDIT_DAYS', 7),
+        'low_attendance_percent' => 75,
+    ],
+
 ];

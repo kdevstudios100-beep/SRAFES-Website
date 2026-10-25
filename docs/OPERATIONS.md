@@ -71,6 +71,24 @@ kept privately only until the import finishes. Limit: 2,000 rows, 2 MB.
 `ACADEMIC_SESSION_START_MONTH` in `.env` (default 4 = April) sets the dates
 suggested for new sessions.
 
+## Attendance
+
+**Setup.**
+1. Create each teacher a user account (Users → Teacher role).
+2. Under Academics → Teacher Assignments, make one teacher the **class teacher** of each class or section for the session (leave Subject empty). Subject teachers can be recorded too; they don't take attendance.
+
+**Teachers** sign in at `/teacher/login` (not `/admin`). They see only the classes they are class teacher of:
+
+- **Daily overview:** which of their registers are taken today.
+- **Take attendance:** pick a date and class, *Mark all present*, change the exceptions, save. Every student must be marked. Teachers can mark or correct up to `ATTENDANCE_TEACHER_EDIT_DAYS` days back (default 7); never future dates.
+- **Attendance report:** totals and percentage per student for a date range, with a CSV download.
+
+**Staff, Principal and Super Admin** have the same three pages in the admin panel (Attendance group) for every class, can correct any date in a session, and see each student's attendance on their student page.
+
+Attendance % = (present + late) ÷ (days marked − leave). Approved leave neither counts for nor against a student. Students below 75% are highlighted. Days with no register (holidays, weekends) simply aren't counted.
+
+Attendance belongs to the student's placement on that day. After a transfer, earlier days stay with the old class and the transfer day itself belongs to the new class. Promotion and leaving never remove attendance.
+
 ## Backups
 
 Each backup is one zip in `BACKUP_PATH` (default `storage/app/backups`) holding a

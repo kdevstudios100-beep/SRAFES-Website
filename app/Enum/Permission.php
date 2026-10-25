@@ -20,6 +20,12 @@ enum Permission: string
     case ManageAcademicSessions = 'manage_academic_sessions';
     case ManageEnrollments = 'manage_enrollments';
     case ImportStudents = 'import_students';
+    case AccessTeacherPanel = 'access_teacher_panel';
+    // Mark attendance for one's own class-teacher sections (teachers), within the edit window
+    case MarkAttendance = 'mark_attendance';
+    // Mark and review attendance for every section, on any date
+    case ManageAttendance = 'manage_attendance';
+    case ManageTeacherAssignments = 'manage_teacher_assignments';
     case ViewExaminationResults = 'view_examination_results';
     case ManageExaminationResults = 'manage_examination_results';
     case ManageCareers = 'manage_careers';

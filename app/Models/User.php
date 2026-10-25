@@ -8,6 +8,7 @@ use App\Enum\Permission;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -54,10 +55,16 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        // Teacher, student and parent panels will add their own checks in later phases
+        // Student and parent panels will add their own checks in later phases
         return match ($panel->getId()) {
             'admin' => $this->is_active && $this->checkPermissionTo(Permission::AccessAdminPanel->value),
+            'teacher' => $this->is_active && $this->checkPermissionTo(Permission::AccessTeacherPanel->value),
             default => false,
         };
+    }
+
+    public function teacherAssignments(): HasMany
+    {
+        return $this->hasMany(TeacherAssignment::class);
     }
 }

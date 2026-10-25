@@ -7,6 +7,7 @@ use App\Filament\Resources\Students\Pages\CreateStudent;
 use App\Filament\Resources\Students\Pages\EditStudent;
 use App\Filament\Resources\Students\Pages\ListStudents;
 use App\Filament\Resources\Students\Pages\ViewStudent;
+use App\Filament\Resources\Students\RelationManagers\AttendanceRecordsRelationManager;
 use App\Filament\Resources\Students\RelationManagers\EnrollmentsRelationManager;
 use App\Filament\Resources\Students\RelationManagers\ExaminationResultsRelationManager;
 use App\Models\AcademicClass;
@@ -240,6 +241,7 @@ class StudentResource extends Resource
         return [
             EnrollmentsRelationManager::class,
             ExaminationResultsRelationManager::class,
+            AttendanceRecordsRelationManager::class,
         ];
     }
 

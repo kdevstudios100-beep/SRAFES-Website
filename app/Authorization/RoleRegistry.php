@@ -40,10 +40,15 @@ final class RoleRegistry
                 Permission::ManageEnrollments,
                 Permission::ViewExaminationResults,
                 Permission::ManageCareers,
+                Permission::MarkAttendance,
+                Permission::ManageAttendance,
             ],
+            // Teachers use the separate /teacher panel, which only shows sections they are assigned to
             UserRole::Teacher => [
                 Permission::ViewStudents,
                 Permission::ViewExaminationResults,
+                Permission::AccessTeacherPanel,
+                Permission::MarkAttendance,
             ],
             UserRole::Student, UserRole::Parent => [],
         };

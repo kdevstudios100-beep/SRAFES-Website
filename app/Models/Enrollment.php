@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * A student's placement in one session, class and section. Create and close
@@ -54,6 +55,20 @@ class Enrollment extends Model
     public function section(): BelongsTo
     {
         return $this->belongsTo(Section::class);
+    }
+
+    public function attendanceRecords(): HasMany
+    {
+        return $this->hasMany(AttendanceRecord::class);
+    }
+
+    // Placements in force on $date. The end date is exclusive: on a transfer day the student
+    // belongs to the new placement only, so they never appear on two registers.
+    public function scopeCoveringDate(Builder $query, string $date): Builder
+    {
+        return $query
+            ->where(fn (Builder $query) => $query->whereNull('enrolled_on')->orWhereDate('enrolled_on', '<=', $date))
+            ->where(fn (Builder $query) => $query->where('status', EnrollmentStatus::Active)->orWhereDate('ended_on', '>', $date));
     }
 
     public function scopeActive(Builder $query): Builder
