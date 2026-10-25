@@ -8,6 +8,7 @@ use App\Models\AcademicSession;
 use App\Models\Enrollment;
 use App\Models\Section;
 use App\Models\Student;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -143,17 +144,43 @@ class Enrollments
         });
     }
 
+    /**
+     * The active placement already holding $rollNumber in this session, class
+     * and section, if any. Roll numbers repeat across classes and sections,
+     * never within one.
+     */
+    public function rollNumberHolder(AcademicSession $session, AcademicClass $class, ?Section $section, ?string $rollNumber, ?Enrollment $except = null): ?Enrollment
+    {
+        if (blank($rollNumber)) {
+            return null;
+        }
+
+        return Enrollment::query()
+            ->active()
+            ->where('academic_session_id', $session->id)
+            ->where('academic_class_id', $class->id)
+            ->where(fn (Builder $query) => $section ? $query->where('section_id', $section->id) : $query->whereNull('section_id'))
+            ->where('roll_number', trim($rollNumber))
+            ->when($except, fn (Builder $query) => $query->whereKeyNot($except->getKey()))
+            ->with('student')
+            ->first();
+    }
+
     private function open(Student $student, AcademicSession $session, AcademicClass $class, ?Section $section, ?string $rollNumber, ?Carbon $on): Enrollment
     {
         if ($section && $section->academic_class_id !== $class->id) {
             throw new EnrollmentException("Section {$section->name} does not belong to {$class->name}.");
         }
 
+        if ($holder = $this->rollNumberHolder($session, $class, $section, $rollNumber)) {
+            throw new RollNumberTakenException("Roll number {$holder->roll_number} in {$holder->placement} already belongs to {$holder->student->name}. Choose another roll number.");
+        }
+
         $enrollment = $student->enrollments()->create([
             'academic_session_id' => $session->id,
             'academic_class_id' => $class->id,
             'section_id' => $section?->id,
-            'roll_number' => filled($rollNumber) ? $rollNumber : null,
+            'roll_number' => filled($rollNumber) ? trim($rollNumber) : null,
             'status' => EnrollmentStatus::Active,
             'enrolled_on' => ($on ?? Carbon::today())->toDateString(),
         ]);

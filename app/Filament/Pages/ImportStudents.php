@@ -95,7 +95,7 @@ class ImportStudents extends Page
         // Keep a private copy between the check and the import, outside the public upload area
         $this->storedPath = $file->storeAs('imports', Str::uuid().'.csv', 'local');
         $this->sessionId = (int) $state['academic_session_id'];
-        $this->report = app(StudentImport::class)->analyze(Storage::disk('local')->path($this->storedPath))->toArray();
+        $this->report = app(StudentImport::class)->analyze(Storage::disk('local')->path($this->storedPath), AcademicSession::find($this->sessionId))->toArray();
         $this->imported = false;
 
         if ($this->report['fatal']) {

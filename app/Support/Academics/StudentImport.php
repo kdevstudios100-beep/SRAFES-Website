@@ -4,6 +4,7 @@ namespace App\Support\Academics;
 
 use App\Models\AcademicClass;
 use App\Models\AcademicSession;
+use App\Models\Enrollment;
 use App\Models\Student;
 use DateTime;
 use Illuminate\Support\Carbon;
@@ -49,16 +50,17 @@ class StudentImport
 
     public function __construct(private readonly Enrollments $enrollments) {}
 
-    public function analyze(string $path): ImportReport
+    // $session: where the students will be enrolled, so roll numbers can be checked against it
+    public function analyze(string $path, ?AcademicSession $session = null): ImportReport
     {
-        return $this->check($path);
+        return $this->check($path, $session);
     }
 
     public function import(string $path, AcademicSession $session): ImportReport
     {
         return DB::transaction(function () use ($path, $session) {
             // Check again: students may have been added since the preview
-            $report = $this->check($path);
+            $report = $this->check($path, $session);
 
             if ($report->fatal) {
                 return $report;
@@ -87,7 +89,7 @@ class StudentImport
         });
     }
 
-    private function check(string $path): ImportReport
+    private function check(string $path, ?AcademicSession $session): ImportReport
     {
         $report = new ImportReport;
         $handle = @fopen($path, 'r');
@@ -115,8 +117,10 @@ class StudentImport
 
             $classes = AcademicClass::with('sections')->get();
             $existing = $this->existingStudents();
+            $takenRolls = $session ? $this->takenRollNumbers($session) : [];
             $seenAdmission = [];
             $seenPerson = [];
+            $seenRoll = [];
             $line = 1;
             $maxRows = (int) config('srafes.academics.import_max_rows', 2000);
 
@@ -138,7 +142,7 @@ class StudentImport
                     }
                 }
 
-                $report->rows[] = $this->checkRow($line, $values, $classes, $existing, $seenAdmission, $seenPerson);
+                $report->rows[] = $this->checkRow($line, $values, $classes, $existing, $takenRolls, $seenAdmission, $seenPerson, $seenRoll);
             }
         } finally {
             fclose($handle);
@@ -154,8 +158,9 @@ class StudentImport
     /**
      * @param  array<string, string>  $values
      * @param  array{admission: array<string, Student>, person: array<string, Student>}  $existing
+     * @param  array<string, Enrollment>  $takenRolls  active placements in the target session, keyed by rollKey()
      */
-    private function checkRow(int $line, array $values, Collection $classes, array $existing, array &$seenAdmission, array &$seenPerson): array
+    private function checkRow(int $line, array $values, Collection $classes, array $existing, array $takenRolls, array &$seenAdmission, array &$seenPerson, array &$seenRoll): array
     {
         $errors = [];
         $get = fn (string $column) => ($values[$column] ?? '') === '' ? null : $values[$column];
@@ -212,6 +217,14 @@ class StudentImport
             $errors[] = 'Class is required.';
         }
 
+        $rollKey = $class && $get('roll_number') ? $this->rollKey($class->id, $section?->id, $get('roll_number')) : null;
+
+        if ($rollKey && isset($takenRolls[$rollKey])) {
+            $errors[] = "Roll number {$get('roll_number')} in {$takenRolls[$rollKey]->placement} already belongs to {$takenRolls[$rollKey]->student->name}.";
+        } elseif ($rollKey && isset($seenRoll[$rollKey])) {
+            $errors[] = "Roll number {$get('roll_number')} is also given on line {$seenRoll[$rollKey]} in the same class and section.";
+        }
+
         $row = [
             'line' => $line,
             'admission_number' => $admission,
@@ -258,9 +271,32 @@ class StudentImport
         if ($duplicateOf) {
             $row['status'] = self::DUPLICATE;
             $row['messages'] = [$duplicateOf];
+        } elseif ($rollKey) {
+            // Only students who will be imported hold a roll number for later lines
+            $seenRoll[$rollKey] = $line;
         }
 
         return $row;
+    }
+
+    /**
+     * @return array<string, Enrollment>
+     */
+    private function takenRollNumbers(AcademicSession $session): array
+    {
+        return Enrollment::query()
+            ->active()
+            ->where('academic_session_id', $session->id)
+            ->whereNotNull('roll_number')
+            ->with(['student', 'academicClass', 'section'])
+            ->get()
+            ->keyBy(fn (Enrollment $enrollment) => $this->rollKey($enrollment->academic_class_id, $enrollment->section_id, $enrollment->roll_number))
+            ->all();
+    }
+
+    private function rollKey(int $classId, ?int $sectionId, string $rollNumber): string
+    {
+        return $classId.':'.($sectionId ?? 0).':'.trim($rollNumber);
     }
 
     /**

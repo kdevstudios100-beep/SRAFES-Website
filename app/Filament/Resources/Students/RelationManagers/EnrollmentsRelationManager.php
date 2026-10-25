@@ -2,6 +2,10 @@
 
 namespace App\Filament\Resources\Students\RelationManagers;
 
+use App\Enum\EnrollmentStatus;
+use App\Models\Enrollment;
+use App\Support\Academics\Enrollments;
+use Closure;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -30,7 +34,21 @@ class EnrollmentsRelationManager extends RelationManager
     {
         return $schema
             ->components([
-                TextInput::make('roll_number')->maxLength(50),
+                TextInput::make('roll_number')
+                    ->maxLength(50)
+                    ->dehydrateStateUsing(fn (?string $state) => filled($state) ? trim($state) : null)
+                    // Only placements still in force compete for a roll number; history may repeat one
+                    ->rule(fn (?Enrollment $record) => function (string $attribute, $value, Closure $fail) use ($record) {
+                        if (! $record || $record->status !== EnrollmentStatus::Active) {
+                            return;
+                        }
+
+                        $holder = app(Enrollments::class)->rollNumberHolder($record->academicSession, $record->academicClass, $record->section, $value, except: $record);
+
+                        if ($holder) {
+                            $fail("Roll number {$holder->roll_number} in {$holder->placement} already belongs to {$holder->student->name}.");
+                        }
+                    }),
                 Textarea::make('notes')->rows(3)->maxLength(1000)->columnSpanFull(),
             ]);
     }

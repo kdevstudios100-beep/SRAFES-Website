@@ -9,6 +9,7 @@ use App\Models\AcademicSession;
 use App\Models\Section;
 use App\Models\Student;
 use App\Support\Academics\Enrollments;
+use App\Support\Academics\RollNumberTakenException;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
@@ -41,13 +42,18 @@ class CreateStudent extends CreateRecord
             $student = Student::create(Arr::except($data, self::ENROLLMENT_FIELDS) + ['is_active' => true]);
 
             if (filled($placement['academic_class_id'] ?? null)) {
-                app(Enrollments::class)->enroll(
-                    $student,
-                    $session,
-                    AcademicClass::findOrFail($placement['academic_class_id']),
-                    filled($placement['section_id'] ?? null) ? Section::findOrFail($placement['section_id']) : null,
-                    $placement['roll_number'] ?? null,
-                );
+                try {
+                    app(Enrollments::class)->enroll(
+                        $student,
+                        $session,
+                        AcademicClass::findOrFail($placement['academic_class_id']),
+                        filled($placement['section_id'] ?? null) ? Section::findOrFail($placement['section_id']) : null,
+                        $placement['roll_number'] ?? null,
+                    );
+                } catch (RollNumberTakenException $exception) {
+                    // Rolls back the new student too, and shows the reason under the roll number field
+                    throw ValidationException::withMessages(['data.roll_number' => $exception->getMessage()]);
+                }
             }
 
             return $student;

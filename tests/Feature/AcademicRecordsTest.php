@@ -34,10 +34,11 @@ beforeEach(function () {
     $this->enrollments = app(Enrollments::class);
 });
 
-function enrolledStudent(array $attributes = []): Student
+// Roll numbers are unique within a section, so pass a different one for each extra student
+function enrolledStudent(array $attributes = [], string $roll = '7'): Student
 {
     $student = Student::factory()->create(['is_active' => true] + $attributes);
-    app(Enrollments::class)->enroll($student, test()->session, test()->class3, test()->section3A, '7');
+    app(Enrollments::class)->enroll($student, test()->session, test()->class3, test()->section3A, $roll);
 
     return $student->refresh();
 }
@@ -139,7 +140,7 @@ describe('enrollment rules', function () {
     });
 
     it('promotes a whole class to the next class, matching sections, and reports who was skipped', function () {
-        $students = collect([enrolledStudent(), enrolledStudent()]);
+        $students = collect([enrolledStudent(), enrolledStudent(roll: '8')]);
         $top = Student::factory()->create();
         $this->enrollments->enroll($top, $this->session, $this->class4);
         $notEnrolled = Student::factory()->create();
@@ -370,7 +371,7 @@ describe('admin screens', function () {
     });
 
     it('bulk-promotes selected students', function () {
-        $students = collect([enrolledStudent(), enrolledStudent()]);
+        $students = collect([enrolledStudent(), enrolledStudent(roll: '8')]);
 
         Livewire::test(ListStudents::class)
             ->selectTableRecords($students->pluck('id')->all())
