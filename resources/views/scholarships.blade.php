@@ -24,7 +24,7 @@
                         <x-profile-cards.simple
                             :profile-image="$student->getFirstMediaUrl('avatar')"
                             :name="$student->name"
-                            :tag-line="$student->academicClass->name"
+                            :tag-line="$student->academicClass?->name"
                         />
                     @endforeach
                 </div>

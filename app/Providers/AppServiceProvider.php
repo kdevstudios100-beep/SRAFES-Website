@@ -40,5 +40,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('use-translation-manager', function (User $user) {
             return $user->is_active && $user->checkPermissionTo(Permission::ManageSiteContent->value);
         });
+
+        Gate::define('import-students', function (User $user) {
+            return $user->is_active && $user->checkPermissionTo(Permission::ImportStudents->value);
+        });
     }
 }

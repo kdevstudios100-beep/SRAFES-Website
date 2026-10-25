@@ -39,4 +39,22 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Academic records
+    |--------------------------------------------------------------------------
+    |
+    | session_start_month: month (1-12) a school year begins, used to suggest
+    | dates and names ("2026-2027") for new academic sessions. Each session's
+    | dates can still be edited in the admin panel.
+    |
+    */
+
+    'academics' => [
+        'session_start_month' => (int) env('ACADEMIC_SESSION_START_MONTH', 4),
+
+        // Largest student CSV accepted by the importer
+        'import_max_rows' => 2000,
+    ],
+
 ];

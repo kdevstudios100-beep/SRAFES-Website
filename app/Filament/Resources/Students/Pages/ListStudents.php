@@ -2,9 +2,10 @@
 
 namespace App\Filament\Resources\Students\Pages;
 
-use Filament\Actions\CreateAction;
+use App\Filament\Pages\ImportStudents;
 use App\Filament\Resources\Students\StudentResource;
-use Filament\Actions;
+use Filament\Actions\Action;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListStudents extends ListRecords
@@ -14,6 +15,12 @@ class ListStudents extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('import')
+                ->label('Import CSV')
+                ->icon('heroicon-m-arrow-up-tray')
+                ->color('gray')
+                ->url(ImportStudents::getUrl())
+                ->visible(fn () => ImportStudents::canAccess()),
             CreateAction::make(),
         ];
     }

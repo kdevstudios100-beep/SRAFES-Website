@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -30,7 +31,8 @@ class Student extends Model implements HasMedia
 
     protected static function booted(): void
     {
-        // Delete results through Eloquent so their uploaded result files are removed too
+        // Delete results through Eloquent so their uploaded result files are removed too.
+        // Enrollment history goes with the student via the foreign key cascade.
         static::deleting(function (Student $student) {
             $student->examinationResults->each->delete();
         });
@@ -52,6 +54,26 @@ class Student extends Model implements HasMedia
     public function examinationResults(): HasMany
     {
         return $this->hasMany(ExaminationResult::class);
+    }
+
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(Enrollment::class);
+    }
+
+    public function currentEnrollment(): HasOne
+    {
+        return $this->hasOne(Enrollment::class)->ofMany(['id' => 'max'], fn (Builder $query) => $query->active());
+    }
+
+    // Students whose active placement matches; null arguments are ignored
+    public function scopeEnrolledIn(Builder $query, ?int $academicSessionId = null, ?int $academicClassId = null, ?int $sectionId = null): Builder
+    {
+        return $query->whereHas('enrollments', fn (Builder $query) => $query
+            ->active()
+            ->when($academicSessionId, fn (Builder $query) => $query->where('academic_session_id', $academicSessionId))
+            ->when($academicClassId, fn (Builder $query) => $query->where('academic_class_id', $academicClassId))
+            ->when($sectionId, fn (Builder $query) => $query->where('section_id', $sectionId)));
     }
 
     public function registerMediaCollections(): void

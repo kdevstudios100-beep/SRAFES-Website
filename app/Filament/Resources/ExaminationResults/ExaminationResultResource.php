@@ -30,6 +30,10 @@ class ExaminationResultResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-chart-bar';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Academics';
+
+    protected static ?int $navigationSort = 6;
+
     public static function form(Schema $schema): Schema
     {
         return $schema

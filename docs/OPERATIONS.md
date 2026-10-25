@@ -27,6 +27,50 @@ is running on 127.0.0.1:3306.
 Only Super Admins manage users. Nobody can delete, deactivate or change the
 roles of their own account, so the last administrator cannot lock everyone out.
 
+## Academic records
+
+Admin panel, **Academics** group:
+
+| Screen | Who can change it | What it holds |
+| --- | --- | --- |
+| Academic Sessions | Principal, Super Admin | School years (e.g. 2026-2027). Exactly one is *current*; it is the default for new enrollments and imports. Dates may not overlap. |
+| Classes | Staff and above | Each class has a **position** (1 = Class 1) used by promotion, plus its **sections** and **subjects** (whole class, or one section only). |
+| Subjects | Staff and above | The subject list. Deactivate a subject instead of deleting it once it is in use. |
+| Students | Staff and above | Search, filter (session, class, section, status, scholarship), student details with enrollment history and results. |
+| Import students | Principal, Super Admin | CSV import (see below). |
+
+**Placements.** A student's class is changed only through the *Placement* menu
+on the student page, or the *Promote / move to session* bulk action on the
+student list. Each change closes the old enrollment (kept as history with its
+end date and status) and opens a new one:
+
+- *Transfer* - another class or section in the same session.
+- *Promote* - into a later session: the next class (promoted) or the same class (retained).
+- *Mark as graduated* / *Mark as left school* - the student becomes inactive.
+- *Enroll / Re-enroll* - for a student with no active placement; makes them active.
+
+Examination results are never changed by any of these. Classes, sections and
+sessions that hold students, history or results cannot be deleted, and
+enrollment history cannot be deleted from the panel.
+
+**End of year.** Create the next session, filter the student list by class,
+select all, choose *Promote / move to session* -> *Next class*. Students in the
+final class are listed as skipped; mark them graduated. Then make the new
+session current.
+
+**CSV import.** Download the template from the import page. Required columns:
+`admission_number`, `first_name`, `class`; optional: `last_name`, `surname`,
+`father_name`, `date_of_birth` (YYYY-MM-DD or DD/MM/YYYY), `section`,
+`roll_number`, `has_scholarship` (yes/no). Classes and sections must exist
+first. *Check file* writes nothing and lists every row as ready, duplicate or
+error. Duplicates (an existing or repeated admission number, or the same name,
+father's name and birth date as another student) are always skipped. *Import*
+re-checks and saves all ready rows in one transaction. The uploaded file is
+kept privately only until the import finishes. Limit: 2,000 rows, 2 MB.
+
+`ACADEMIC_SESSION_START_MONTH` in `.env` (default 4 = April) sets the dates
+suggested for new sessions.
+
 ## Backups
 
 Each backup is one zip in `BACKUP_PATH` (default `storage/app/backups`) holding a

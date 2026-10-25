@@ -12,6 +12,8 @@ use Spatie\Permission\PermissionRegistrar;
  * Single source of truth for which role holds which permission.
  * Teachers, students and parents get no admin panel access; their own
  * portals (with record-level ownership checks) arrive in later phases.
+ * Staff run day-to-day enrollment; only principals and super admins open
+ * or close academic sessions and bulk-import students.
  */
 final class RoleRegistry
 {
@@ -35,6 +37,7 @@ final class RoleRegistry
                 Permission::ManageStudents,
                 Permission::ViewStaff,
                 Permission::ManageClasses,
+                Permission::ManageEnrollments,
                 Permission::ViewExaminationResults,
                 Permission::ManageCareers,
             ],

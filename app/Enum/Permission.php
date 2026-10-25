@@ -17,6 +17,9 @@ enum Permission: string
     case ViewStaff = 'view_staff';
     case ManageStaff = 'manage_staff';
     case ManageClasses = 'manage_classes';
+    case ManageAcademicSessions = 'manage_academic_sessions';
+    case ManageEnrollments = 'manage_enrollments';
+    case ImportStudents = 'import_students';
     case ViewExaminationResults = 'view_examination_results';
     case ManageExaminationResults = 'manage_examination_results';
     case ManageCareers = 'manage_careers';

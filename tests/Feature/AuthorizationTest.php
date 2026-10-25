@@ -19,6 +19,12 @@ dataset('admin pages', [
     '/admin/media-assets',
     '/admin/users',
     '/admin/site-settings',
+    '/admin/academic-sessions',
+    '/admin/academic-sessions/create',
+    '/admin/academic-classes/create',
+    '/admin/subjects',
+    '/admin/subjects/create',
+    '/admin/import-students',
 ]);
 
 it('creates every role with exactly the permissions in the registry', function () {
